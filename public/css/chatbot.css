@@ -1,0 +1,237 @@
+/* ==========================================================
+   PT DIMENSI LAND — chatbot.css
+   Memakai variabel warna dari style.css (--blue, --navy, dst.)
+   ========================================================== */
+
+.chatbot {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 150;
+  font-family: var(--font-body);
+}
+
+/* ---------- Tombol bulat ---------- */
+.chat-fab {
+  width: 60px;
+  height: 60px;
+  display: grid;
+  place-items: center;
+  color: var(--white);
+  background: var(--blue);
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 14px 30px -10px rgba(47, 127, 209, .8), 0 2px 6px rgba(11, 37, 69, .2);
+  transition: background .2s, transform .2s;
+}
+
+.chat-fab:hover { background: var(--blue-dark); transform: translateY(-2px); }
+
+.chatbot.is-open .chat-fab { display: none; }
+
+/* ---------- Jendela chat ---------- */
+.chat-panel {
+  width: min(380px, calc(100vw - 2rem));
+  height: min(560px, calc(100dvh - 2.5rem));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  box-shadow: 0 30px 60px -20px rgba(11, 37, 69, .45), 0 4px 12px rgba(11, 37, 69, .12);
+}
+
+.chat-panel[hidden] { display: none; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .chat-panel { animation: chat-in .25s cubic-bezier(.2, .7, .2, 1); transform-origin: bottom right; }
+  @keyframes chat-in {
+    from { opacity: 0; transform: translateY(12px) scale(.97); }
+    to { opacity: 1; transform: none; }
+  }
+}
+
+.chat-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: .9rem 1rem .9rem 1.15rem;
+  color: var(--white);
+  background: var(--navy);
+}
+
+.chat-head strong {
+  display: block;
+  font-family: var(--font-head);
+  font-size: 1.05rem;
+  line-height: 1.2;
+}
+
+.chat-head span {
+  font-size: .82rem;
+  color: rgba(255, 255, 255, .72);
+}
+
+.chat-close {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  display: grid;
+  place-items: center;
+  color: var(--white);
+  background: rgba(255, 255, 255, .12);
+  border: 0;
+  border-radius: 50%;
+  font-size: .85rem;
+  cursor: pointer;
+  transition: background .2s;
+}
+
+.chat-close:hover { background: rgba(255, 255, 255, .24); }
+
+/* ---------- Pesan ---------- */
+.chat-messages {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: .6rem;
+  padding: 1rem;
+  overflow-y: auto;
+  background: var(--paper);
+}
+
+.chat-msg {
+  max-width: 86%;
+  padding: .65rem .9rem;
+  font-size: .95rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  border-radius: 14px;
+}
+
+.chat-bot {
+  align-self: flex-start;
+  color: var(--ink);
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-bottom-left-radius: 4px;
+}
+
+.chat-user {
+  align-self: flex-end;
+  color: var(--white);
+  background: var(--blue);
+  border-bottom-right-radius: 4px;
+}
+
+.chat-bot.is-error {
+  color: #8a2b2b;
+  background: #fdf0f0;
+  border-color: #f0c9c9;
+}
+
+/* titik tiga saat menunggu jawaban */
+.chat-bot.is-typing::before {
+  content: "";
+  display: inline-block;
+  width: 34px;
+  height: 8px;
+  vertical-align: middle;
+  background:
+    radial-gradient(circle 4px at 4px 4px, var(--muted) 98%, transparent) 0 0 / 11px 8px repeat-x;
+  animation: chat-dots 1s steps(4, end) infinite;
+}
+
+@keyframes chat-dots {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+
+/* ---------- Saran pertanyaan ---------- */
+.chat-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+  padding: .6rem 1rem 0;
+  background: var(--paper);
+}
+
+.chat-chips[hidden] { display: none; }
+
+.chat-chips button {
+  font: 600 .82rem var(--font-body);
+  color: var(--blue-dark);
+  background: var(--white);
+  border: 1px solid var(--blue);
+  padding: .4rem .8rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background .2s, color .2s;
+}
+
+.chat-chips button:hover { color: var(--white); background: var(--blue); }
+
+/* ---------- Kolom ketik ---------- */
+.chat-form {
+  display: flex;
+  gap: .5rem;
+  padding: .75rem 1rem;
+  background: var(--paper);
+}
+
+.chat-form input {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  padding: 0 1rem;
+  font: 500 .95rem var(--font-body);
+  color: var(--ink);
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+
+.chat-form input:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(47, 127, 209, .2);
+}
+
+.chat-form button {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  display: grid;
+  place-items: center;
+  color: var(--white);
+  background: var(--blue);
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background .2s;
+}
+
+.chat-form button:hover:not(:disabled) { background: var(--blue-dark); }
+.chat-form button:disabled, .chat-form input:disabled { opacity: .6; cursor: not-allowed; }
+
+.chat-note {
+  margin: 0;
+  padding: .5rem 1rem .75rem;
+  font-size: .75rem;
+  line-height: 1.4;
+  color: var(--muted);
+  text-align: center;
+  background: var(--paper);
+}
+
+.chat-note a { color: var(--blue-dark); font-weight: 700; }
+
+/* HP: jendela hampir penuh layar */
+@media (max-width: 480px) {
+  .chatbot { right: .75rem; bottom: .75rem; }
+  .chat-panel { width: calc(100vw - 1.5rem); height: calc(100dvh - 1.5rem); }
+}
