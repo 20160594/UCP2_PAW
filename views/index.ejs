@@ -1571,251 +1571,327 @@ point: "View spektakuler tebing laut Samudera Hindia, sunrise, dekat JLS dan pan
 ];
 
 
-const itemsPerPage=10;
-let currentPage=1;
-let filtered=properties;
+const itemsPerPage = 10;
+let currentPage = 1;
+let filtered = properties;
 
-const container=document.getElementById("property-list");
-const pagination=document.getElementById("pagination");
-const searchInput=document.getElementById("property-search");
-const searchClear=document.getElementById("search-clear");
-const searchInfo=document.getElementById("search-info");
+const container = document.getElementById("property-list");
+const pagination = document.getElementById("pagination");
+const searchInput = document.getElementById("property-search");
+const searchClear = document.getElementById("search-clear");
+const searchInfo = document.getElementById("search-info");
+
+
+/* ---------- NORMALISASI PENCARIAN ---------- */
+
+function normalize(text) {
+  return String(text || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/²/g, "2")
+    .replace(/m\s*2/g, "m2")
+    .replace(/(\d)\s+(m|meter)\b/g, "$1$2")
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+
+/* ---------- INDEKS PENCARIAN ---------- */
+
+// Mengambil seluruh informasi dari setiap properti
+const searchIndex = properties.map(item => {
+
+  const searchableText = Object.values(item)
+    .filter(value => value !== null && value !== undefined)
+    .join(" ");
+
+  return {
+    item,
+    text: normalize(searchableText)
+  };
+
+});
 
 
 /* ---------- PENCARIAN ---------- */
 
-function normalize(text){
-return String(text||"")
-.toLowerCase()
-.replace(/²/g,"2")
-.replace(/\s+/g," ")
-.trim();
-}
+function applySearch() {
 
-/* teks yang dicari: judul, lokasi, luas, harga, sertifikat */
-const searchIndex=properties.map(item=>({
-item,
-text:normalize([item.judul,item.lokasi,item.luas,item.harga,item.sertifikat].join(" "))
-}));
+  const query = normalize(searchInput.value);
+  const words = query.split(" ").filter(Boolean);
 
-function applySearch(){
+  filtered = words.length
+    ? searchIndex
+        .filter(entry =>
+          words.every(word => entry.text.includes(word))
+        )
+        .map(entry => entry.item)
+    : properties;
 
-const query=normalize(searchInput.value);
-const words=query.split(" ").filter(Boolean);
+  currentPage = 1;
 
-filtered=words.length
-? searchIndex.filter(e=>words.every(w=>e.text.includes(w))).map(e=>e.item)
-: properties;
+  searchClear.hidden = !searchInput.value;
 
-currentPage=1;
-searchClear.hidden=!searchInput.value;
+  searchInfo.textContent = words.length
+    ? `${filtered.length} properti ditemukan untuk pencarian "${searchInput.value.trim()}"`
+    : "";
 
-searchInfo.textContent=words.length
-? `${filtered.length} properti ditemukan untuk "${searchInput.value.trim()}"`
-: "";
-
-renderPage(1);
+  renderPage(currentPage);
 
 }
 
+
+// Debounce pencarian agar lebih ringan
 let searchTimer;
 
-searchInput.addEventListener("input",()=>{
-clearTimeout(searchTimer);
-searchTimer=setTimeout(applySearch,250);
-});
+searchInput.addEventListener("input", () => {
 
-function clearSearch(){
-searchInput.value="";
-applySearch();
-searchInput.focus();
-}
+  clearTimeout(searchTimer);
 
-searchClear.addEventListener("click",clearSearch);
-
-searchInput.addEventListener("keydown",e=>{
-if(e.key==="Escape") clearSearch();
-});
-
-
-/* ---------- DETAIL ---------- */
-
-function generateDetail(item){
-
-return `
-
-<div class="detail-grid">
-
-<div class="detail-item">
-<span>Status Sertifikat</span>
-<strong>${item.sertifikat}</strong>
-</div>
-
-<div class="detail-item">
-<span>Luasan</span>
-<strong>${item.luas}${item.mdpl ? ` | ${item.mdpl} mdpl` : ""}</strong>
-</div>
-
-<div class="detail-item">
-<span>Muka Tanah</span>
-<strong>${item.muka}</strong>
-</div>
-
-<div class="detail-item">
-<span>Lokasi</span>
-<strong>${item.lokasi}</strong>
-</div>
-
-<div class="detail-item">
-<span>Akses Jalan</span>
-<strong>${item.akses}</strong>
-</div>
-
-<div class="detail-item">
-<span>Fasilitas Air</span>
-<strong>${item.air}</strong>
-</div>
-
-<div class="detail-item">
-<span>Fasilitas Listrik</span>
-<strong>${item.listrik}</strong>
-</div>
-
-<div class="detail-item">
-<span>Kondisi</span>
-<strong>${item.kondisi}</strong>
-</div>
-
-</div>
-
-<div class="prospek-box">
-Prospek: ${item.prospek}
-</div>
-
-<div class="point-box">
-Point Penting: ${item.point}
-</div>
-
-`;
-
-}
-
-
-/* ---------- RENDER ---------- */
-
-function renderEmpty(){
-
-container.innerHTML="";
-pagination.innerHTML="";
-
-const box=document.createElement("div");
-box.className="no-result";
-
-const msg=document.createElement("p");
-msg.textContent=`Tidak ada properti untuk "${searchInput.value.trim()}".`;
-
-const btn=document.createElement("button");
-btn.type="button";
-btn.textContent="Hapus pencarian";
-btn.onclick=clearSearch;
-
-box.appendChild(msg);
-box.appendChild(btn);
-container.appendChild(box);
-
-}
-
-
-function renderPage(page){
-
-if(filtered.length===0){
-renderEmpty();
-return;
-}
-
-container.innerHTML="";
-
-const start=(page-1)*itemsPerPage;
-const end=start+itemsPerPage;
-
-filtered.slice(start,end).forEach((item,i)=>{
-
-const card=document.createElement("div");
-
-card.className="property-card";
-
-card.innerHTML=`
-
-<div class="thumbnail-wrapper">
-<img src="${item.thumbnail}" alt="${item.judul}" loading="lazy">
-</div>
-
-<div class="property-content">
-
-<h3>${item.judul}</h3>
-
-<div class="price">${item.harga}</div>
-
-${generateDetail(item)}
-
-<div class="btn-row">
-  <a href="${item.video}" target="_blank" class="video-btn">▶ Lihat Video</a>
-
-  <a href="https://wa.me/6287737447313?text=Saya tertarik dengan properti: ${encodeURIComponent(item.judul)}"
-     target="_blank" class="whatsapp-btn">Hubungi WhatsApp</a>
-</div>
-
-</div>
-
-`;
-
-container.appendChild(card);
-
-setTimeout(()=>card.classList.add("show"),100*i);
+  searchTimer = setTimeout(applySearch, 250);
 
 });
 
-renderPagination();
+
+// Tombol hapus pencarian
+function clearSearch() {
+
+  clearTimeout(searchTimer);
+
+  searchInput.value = "";
+
+  applySearch();
+
+  searchInput.focus();
+
+}
+
+searchClear.addEventListener("click", clearSearch);
+
+
+// Tombol Escape untuk menghapus pencarian
+searchInput.addEventListener("keydown", event => {
+
+  if (event.key === "Escape") {
+    clearSearch();
+  }
+
+});
+
+
+/* ---------- DETAIL PROPERTI ---------- */
+
+function generateDetail(item) {
+
+  return `
+    <div class="detail-grid">
+
+      <div class="detail-item">
+        <span>Lokasi</span>
+        <strong>${item.lokasi || "-"}</strong>
+      </div>
+
+      <div class="detail-item">
+        <span>Ketinggian</span>
+        <strong>${item.mdpl ? `${item.mdpl} mdpl` : "-"}</strong>
+      </div>
+
+      <div class="detail-item">
+        <span>Akses Jalan</span>
+        <strong>${item.akses || "-"}</strong>
+      </div>
+
+      <div class="detail-item">
+        <span>Fasilitas Air / Listrik</span>
+        <strong>${item.air || "-"} / ${item.listrik || "-"}</strong>
+      </div>
+
+    </div>
+
+    <div class="kondisi-box">
+      <strong>Kondisi</strong>
+      ${item.kondisi || "-"}
+    </div>
+
+    <div class="prospek-box">
+      <strong>Prospek</strong>
+      ${item.prospek || "-"}
+    </div>
+
+    <div class="point-box">
+      <strong>Poin Penting</strong>
+      ${item.point || "-"}
+    </div>
+  `;
 
 }
 
 
-function renderPagination(){
+/* ---------- TAMPILAN KOSONG ---------- */
 
-pagination.innerHTML="";
+function renderEmpty() {
 
-const totalPages=Math.ceil(filtered.length/itemsPerPage);
+  container.innerHTML = "";
 
-for(let i=1;i<=totalPages;i++){
+  pagination.innerHTML = "";
 
-const btn=document.createElement("button");
+  const box = document.createElement("div");
 
-btn.innerText=i;
+  box.className = "no-result";
 
-btn.className="page-btn";
+  const message = document.createElement("p");
 
-if(i===currentPage)
-btn.classList.add("active");
+  message.textContent =
+    `Tidak ada properti untuk "${searchInput.value.trim()}".`;
 
-btn.onclick = () => {
+  const button = document.createElement("button");
 
-  currentPage = i;
+  button.type = "button";
 
-  renderPage(i);
+  button.textContent = "Hapus pencarian";
 
-  document.getElementById("property").scrollIntoView({
-    behavior: "smooth",
-    block: "start"
+  button.onclick = clearSearch;
+
+  box.appendChild(message);
+
+  box.appendChild(button);
+
+  container.appendChild(box);
+
+}
+
+
+/* ---------- RENDER PROPERTI ---------- */
+
+function renderPage(page) {
+
+  if (filtered.length === 0) {
+
+    renderEmpty();
+
+    return;
+
+  }
+
+  container.innerHTML = "";
+
+  const start = (page - 1) * itemsPerPage;
+
+  const end = start + itemsPerPage;
+
+  filtered.slice(start, end).forEach((item, index) => {
+
+    const card = document.createElement("div");
+
+    card.className = "property-card";
+
+    card.innerHTML = `
+      <div class="thumbnail-wrapper">
+
+        <img
+          src="${item.thumbnail}"
+          alt="${item.judul}"
+          loading="lazy"
+        >
+
+      </div>
+
+      <div class="property-content">
+
+        <h3>${item.judul}</h3>
+
+        <div class="price">${item.harga}</div>
+
+        ${generateDetail(item)}
+
+        <div class="btn-row">
+
+          <a
+            href="${item.video}"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="video-btn"
+          >▶ Lihat Video</a>
+
+          <a
+            href="https://wa.me/6287737447313?text=${encodeURIComponent("Saya tertarik dengan properti: " + item.judul)}"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="whatsapp-btn"
+          >Hubungi WhatsApp</a>
+
+        </div>
+
+      </div>
+    `;
+
+    container.appendChild(card);
+
+    setTimeout(() => {
+
+      card.classList.add("show");
+
+    }, 100 * index);
+
   });
 
-};
-
-pagination.appendChild(btn);
+  renderPagination();
 
 }
 
+
+/* ---------- PAGINATION ---------- */
+
+function renderPagination() {
+
+  pagination.innerHTML = "";
+
+  const totalPages = Math.ceil(
+    filtered.length / itemsPerPage
+  );
+
+  for (let i = 1; i <= totalPages; i++) {
+
+    const button = document.createElement("button");
+
+    button.innerText = i;
+
+    button.className = "page-btn";
+
+    if (i === currentPage) {
+
+      button.classList.add("active");
+
+    }
+
+    button.onclick = () => {
+
+      currentPage = i;
+
+      renderPage(i);
+
+      document.getElementById("property").scrollIntoView({
+
+        behavior: "smooth",
+
+        block: "start"
+
+      });
+
+    };
+
+    pagination.appendChild(button);
+
+  }
+
 }
 
+
+/* ---------- INISIALISASI ---------- */
+
+searchClear.hidden = true;
 
 renderPage(currentPage);
 </script>
